@@ -1,5 +1,10 @@
 import { createSupabaseServerClient } from '@/lib/supabase/client-simple'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { RecentDocuments } from '@/components/dashboard/RecentDocuments'
+import { WritingStats } from '@/components/dashboard/WritingStats'
+import { QuickActions } from '@/components/dashboard/QuickActions'
+import { JournalOverview } from '@/components/dashboard/JournalOverview'
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient()
@@ -17,6 +22,50 @@ export default async function DashboardPage() {
     .select('*')
     .eq('id', user.id)
     .single()
+
+  // Get recent documents with journals
+  const { data: recentDocuments } = await supabase
+    .from('documents')
+    .select(`
+      *,
+      writing_journals (
+        id,
+        entry_count,
+        updated_at
+      )
+    `)
+    .eq('writer_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(5)
+
+  // Get overall stats
+  const { data: allDocuments, count: documentCount } = await supabase
+    .from('documents')
+    .select('*', { count: 'exact', head: true })
+    .eq('writer_id', user.id)
+
+  const { data: allJournals, count: journalCount } = await supabase
+    .from('writing_journals')
+    .select('entry_count', { count: 'exact' })
+    .eq('writer_id', user.id)
+
+  const totalEntries = allJournals?.reduce((sum, j) => sum + (j.entry_count || 0), 0) || 0
+
+  // Get recent journal activity
+  const { data: recentJournalActivity } = await supabase
+    .from('writing_journals')
+    .select(`
+      id,
+      entry_count,
+      updated_at,
+      documents (
+        id,
+        title
+      )
+    `)
+    .eq('writer_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(5)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,46 +94,47 @@ export default async function DashboardPage() {
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-8">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Welcome to Mindmark
-              </h2>
-              <p className="text-gray-600 mb-8">
-                Your AI-native writing platform with process verification is ready.
-              </p>
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Welcome back, {writer?.display_name || writer?.username || 'Writer'}
+            </h2>
+            <p className="text-gray-600">
+              Your AI-native writing platform with process verification
+            </p>
+          </div>
+
+          {/* Stats Overview */}
+          <div className="mb-8">
+            <WritingStats
+              documentCount={documentCount || 0}
+              journalCount={journalCount || 0}
+              totalEntries={totalEntries}
+              userId={user.id}
+            />
+          </div>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-8">
+              {/* Quick Actions */}
+              <QuickActions userId={user.id} />
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-2">Create Document</h3>
-                  <p className="text-gray-600 text-sm mb-4">
-                    Start a new writing project with automatic journal capture.
-                  </p>
-                  <button className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
-                    New Document
-                  </button>
-                </div>
-                
-                <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-2">View Journals</h3>
-                  <p className="text-gray-600 text-sm mb-4">
-                    Explore your writing process history and insights.
-                  </p>
-                  <button className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
-                    Browse Journals
-                  </button>
-                </div>
-                
-                <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-2">Generate Certificate</h3>
-                  <p className="text-gray-600 text-sm mb-4">
-                    Create verifiable proof of your writing process.
-                  </p>
-                  <button className="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
-                    Create Certificate
-                  </button>
-                </div>
-              </div>
+              {/* Recent Documents */}
+              <RecentDocuments 
+                documents={recentDocuments || []}
+                userId={user.id}
+              />
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-8">
+              {/* Journal Overview */}
+              <JournalOverview 
+                recentActivity={recentJournalActivity || []}
+                userId={user.id}
+              />
             </div>
           </div>
         </div>

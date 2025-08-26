@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    ppr: 'incremental',
+    // ppr: 'incremental', // Disabled for stable Next.js version
   },
 }
 

@@ -417,70 +417,54 @@ export class BrowserVerificationService implements VerificationService {
   }
 
   /**
-   * Submit to Arweave (placeholder implementation)
+   * Submit to Arweave via witness service
    */
   async submitToArweave(data: any): Promise<string> {
-    try {
-      const response = await fetch('/api/verify/witness/arweave', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-
-      if (!response.ok) {
-        throw new Error('Arweave submission failed')
-      }
-
-      const result = await response.json()
-      return result.transactionId
-    } catch (error) {
-      throw new Error(`Arweave submission failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
+    const { createWitnessService } = await import('./witness')
+    const witnessService = createWitnessService()
+    
+    return await witnessService.submitToArweave({
+      journalId: data.journalId,
+      merkleRoot: data.merkleRoot,
+      entryRange: data.entryRange,
+      timestamp: data.timestamp
+    })
   }
 
   /**
-   * Submit to Twitter (placeholder implementation)
+   * Submit to Twitter via witness service
    */
   async submitToTwitter(message: string): Promise<string> {
-    try {
-      const response = await fetch('/api/verify/witness/twitter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
-      })
-
-      if (!response.ok) {
-        throw new Error('Twitter submission failed')
-      }
-
-      const result = await response.json()
-      return result.tweetId
-    } catch (error) {
-      throw new Error(`Twitter submission failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
+    const { createWitnessService } = await import('./witness')
+    const witnessService = createWitnessService()
+    
+    return await witnessService.submitToTwitter({
+      message,
+      timestamp: new Date().toISOString()
+    })
   }
 
   /**
-   * Verify Arweave witness
+   * Verify Arweave witness via witness service
    */
   private async verifyArweaveWitness(transactionId: string): Promise<boolean> {
     try {
-      // Check if transaction exists on Arweave
-      const response = await fetch(`https://arweave.net/tx/${transactionId}`)
-      return response.ok
+      const { createWitnessService } = await import('./witness')
+      const witnessService = createWitnessService()
+      return await witnessService.verifyArweaveWitness(transactionId)
     } catch {
       return false
     }
   }
 
   /**
-   * Verify Twitter witness
+   * Verify Twitter witness via witness service
    */
   private async verifyTwitterWitness(tweetId: string): Promise<boolean> {
     try {
-      // Placeholder - would check if tweet exists
-      // In practice, would use Twitter API
-      return true
+      const { createWitnessService } = await import('./witness')
+      const witnessService = createWitnessService()
+      return await witnessService.verifyTwitterWitness(tweetId)
     } catch {
       return false
     }

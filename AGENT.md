@@ -5,11 +5,15 @@ Development commands for Mindmark AI-native writing platform.
 ## Commands
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production  
-npm run type-check   # TypeScript validation
-npm run lint         # ESLint validation
-npx supabase start   # Local Supabase development
+npm run dev              # Start development server
+npm run build            # Build for production  
+npm run type-check       # TypeScript validation
+npm run lint             # ESLint validation
+npm run test             # Run test suite
+npm run test:watch       # Run tests in watch mode
+npm run test:coverage    # Run tests with coverage
+npx supabase start       # Local Supabase development
+npx supabase db reset    # Reset database with migrations
 ```
 
 ## Code Style
