@@ -7,6 +7,10 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { ConfirmModal } from '@/components/ui/Modal'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useToast } from '@/lib/hooks/useToast'
+import { formatRelativeTime } from '@/lib/utils/ui'
 
 interface Document {
   id: string
@@ -34,6 +38,9 @@ interface DocumentCardProps {
 export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps) {
   const [showActions, setShowActions] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const { success, error } = useToast()
 
   const journal = document.writing_journals?.[0]
   
@@ -44,18 +51,6 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
       month: 'short',
       day: 'numeric'
     })
-  }
-
-  // Format time ago
-  const formatTimeAgo = (dateString: string) => {
-    const now = new Date()
-    const date = new Date(dateString)
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    
-    if (diffInHours < 1) return 'Just now'
-    if (diffInHours < 24) return `${diffInHours}h ago`
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`
-    return formatDate(dateString)
   }
 
   // Estimate reading time from content
@@ -87,10 +82,6 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
 
   // Delete document
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete "${document.title}"? This action cannot be undone.`)) {
-      return
-    }
-
     try {
       setDeleting(true)
       
@@ -102,18 +93,22 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
         throw new Error('Failed to delete document')
       }
 
+      success('Document deleted', `"${document.title}" has been deleted successfully.`)
       onUpdate() // Refresh the list
-    } catch (error) {
-      console.error('Failed to delete document:', error)
-      alert('Failed to delete document. Please try again.')
+    } catch (err) {
+      console.error('Failed to delete document:', err)
+      error('Delete failed', 'Failed to delete document. Please try again.')
     } finally {
       setDeleting(false)
+      setShowDeleteModal(false)
     }
   }
 
   // Toggle published status
   const handleTogglePublished = async () => {
     try {
+      setPublishing(true)
+      
       const response = await fetch(`/api/documents/${document.id}`, {
         method: 'PUT',
         headers: {
@@ -128,10 +123,18 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
         throw new Error('Failed to update document')
       }
 
+      const action = document.published ? 'unpublished' : 'published'
+      success(
+        `Document ${action}`, 
+        `"${document.title}" has been ${action} successfully.`
+      )
       onUpdate() // Refresh the list
-    } catch (error) {
-      console.error('Failed to update document:', error)
-      alert('Failed to update document. Please try again.')
+    } catch (err) {
+      console.error('Failed to update document:', err)
+      error('Update failed', 'Failed to update document. Please try again.')
+    } finally {
+      setPublishing(false)
+      setShowActions(false)
     }
   }
 
@@ -157,7 +160,7 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
               {getContentPreview()}
             </p>
             <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-              <span>Updated {formatTimeAgo(document.updated_at)}</span>
+              <span>Updated {formatRelativeTime(document.updated_at)}</span>
               {journal && (
                 <span>{journal.entry_count} journal entries</span>
               )}
@@ -191,16 +194,19 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
                   <div className="py-1">
                     <button
                       onClick={handleTogglePublished}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      disabled={publishing}
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                     >
+                      {publishing && <LoadingSpinner size="sm" className="mr-2" />}
                       {document.published ? 'Unpublish' : 'Publish'}
                     </button>
                     <button
-                      onClick={handleDelete}
+                      onClick={() => setShowDeleteModal(true)}
                       disabled={deleting}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
                     >
-                      {deleting ? 'Deleting...' : 'Delete'}
+                      {deleting && <LoadingSpinner size="sm" className="mr-2" />}
+                      Delete
                     </button>
                   </div>
                 </div>

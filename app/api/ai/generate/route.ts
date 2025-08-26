@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/client-simple'
 import { createJournalService } from '@/lib/services/journal'
+import { aiRateLimit } from '@/lib/middleware/rate-limit'
 import { z } from 'zod'
 
 // Request validation schema
@@ -32,6 +33,7 @@ const GenerateRequestSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  return aiRateLimit(request, async () => {
   try {
     // Verify authentication
     const supabase = await createSupabaseServerClient()
@@ -145,6 +147,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+  })
 }
 
 /**

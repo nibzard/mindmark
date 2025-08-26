@@ -58,8 +58,7 @@ export class HashChain {
         return false
       }
       
-      // Verify content hash
-      const expectedContentHash = this.hash(entry.content_hash) // Assuming content stored separately
+      // Move to next expected hash
       expectedPrevHash = entry.content_hash
     }
     
