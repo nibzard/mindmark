@@ -6,7 +6,81 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Mindmark is an AI-native writing platform that creates immutable process journals alongside written work, making creative thinking legible and verifiable in an AI-dominated future. The platform captures the writing process - prompts, decisions, revisions - in cryptographically-signed, timestamped journals that can be made public while protecting private content.
 
+## Development Commands
+
+```bash
+# Development
+npm run dev --host          # Start development server (always use --host flag)
+npm run build               # Build for production
+npm run start               # Start production server
+npm run type-check          # TypeScript validation  
+npm run lint                # ESLint validation
+npm run test                # Run test suite with Vitest
+npm run test:watch          # Run tests in watch mode
+npm run test:coverage       # Generate test coverage report
+
+# Turbopack (for faster development)
+npm run dev --host --turbo  # Use Turbopack for much faster local development
+npm run build --turbo       # Use Turbopack for builds (beta)
+
+# Database (Supabase)
+npx supabase start          # Start local Supabase
+npx supabase db push        # Apply schema changes
+npx supabase gen types typescript --local # Generate TypeScript types from DB schema
+```
+
+### Important Notes
+- Always run with: `npm run dev --host`
+- Tailscale address is: http://100.126.153.59:3000/
+- Use `--turbo` flag for faster development with Turbopack (stable for dev, beta for build)
+
 ## Architecture
+
+### Service Layer Pattern
+
+The codebase follows Domain-Driven Design with a consistent service layer pattern:
+
+```typescript
+// Service Interface (in lib/services/[domain].ts)
+interface Service {
+  // Core CRUD operations
+  create(...): Promise<Entity>
+  update(...): Promise<Entity> 
+  delete(...): Promise<void>
+  get(...): Promise<Entity | null>
+  
+  // Domain-specific operations
+  domainOperation(...): Promise<Result>
+}
+
+// Dual Implementation Pattern
+class BrowserService implements Service {
+  private supabase = createSupabaseBrowserClient()
+  // Client-side implementation
+}
+
+class ServerService implements Service {
+  private async getSupabase() {
+    return await createSupabaseServerClient()
+  }
+  // Server-side implementation (RSC compatible)
+}
+
+// Factory Function
+export function createService(): Service {
+  return typeof window !== 'undefined' 
+    ? new BrowserService() 
+    : new ServerService()
+}
+```
+
+### Key Services
+
+- **AuthService** (`lib/services/auth.ts`): Authentication and writer profiles
+- **DocumentService** (`lib/services/document.ts`): Document CRUD, auto-save, publishing
+- **JournalService** (`lib/services/journal.ts`): Process capture, hash chains, privacy levels
+- **VerificationService** (`lib/services/verification.ts`): Merkle trees, certificates
+- **AIService** (`lib/services/ai.ts`): AI provider abstraction (OpenAI/Anthropic)
 
 ### Frontend Stack
 - **Next.js 15** with App Router and React Server Components
@@ -23,101 +97,132 @@ Mindmark is an AI-native writing platform that creates immutable process journal
 - **Twitter API** for free checkpointing
 - **OpenAI gpt-5-mini** for summaries, **Anthropic Claude 4 Sonnet** for writing
 
-### Key Data Structures
-- **Documents**: Main content with Lexical editor state
-- **Journals**: Process journals with privacy levels (private/summary/public)
-- **Journal Entries**: Append-only log of prompts, responses, decisions, annotations
-- **Checkpoints**: Merkle tree roots for immutability verification
-- **Certificates**: Exportable JSON-LD proof documents
+### Database Schema
 
-## Development Commands
+Core tables with domain relationships:
 
-Since this is an early-stage project without implementation yet:
+- **writers**: User profiles with public keys and settings
+- **documents**: Lexical editor state, writer_id foreign key
+- **writing_journals**: Process journals with privacy levels, document_id foreign key
+- **journal_entries**: Append-only log with hash chains, journal_id foreign key
+- **verification_checkpoints**: Merkle tree snapshots
+- **publication_certificates**: Exportable verification documents
+
+Row Level Security (RLS) policies ensure users only access their own private data.
+
+## Testing
+
+Tests use Vitest with coverage reporting:
 
 ```bash
-# Setup (when implemented)
-npm install
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run type-check   # TypeScript validation
-npm run lint         # ESLint validation
-
-# Database (Supabase)
-npx supabase start   # Local development
-npx supabase db push # Apply schema changes
-npx supabase gen types typescript --local # Generate types
+npm run test                # Run all tests
+npm run test:watch          # Watch mode
+npm run test:coverage       # Generate coverage report
+npm run test -- journal     # Run specific test file pattern
 ```
 
-## Core Features to Implement
+Test files are located alongside source files as `*.test.ts`.
 
-### 1. Process Journal System
-- Automatic capture of every AI interaction with timestamps
-- Inline annotations via `//` comments or voice notes
-- Prompt evolution tracking showing thinking development
-- Privacy levels: Full journal (private) → Summary (public) → Certificate (immutable)
-- Cross-references via @mentions and source links
+## Hash Chain Implementation
 
-### 2. AI-Native Editor
-- Command palette interface for AI interactions
-- Version branching to explore multiple AI suggestions in parallel
-- Contextual AI that understands full journal context
-- Multi-model support (OpenAI GPT-5-mini, Claude 4 Sonnet)
-- Smart diff view showing exactly what AI changed
+The platform uses SHA-256 hash chains for immutability:
 
-### 3. Immutability Layer
-- Hash chain where each entry includes previous hash
-- Periodic checkpoints with Merkle roots posted every 10 entries
-- Public witness via Twitter, Arweave, or Ethereum L2
-- Selective disclosure to prove specific entries without revealing all
-- Portable certificates as JSON-LD + cryptographic signatures
+```typescript
+// lib/services/journal.ts - HashChain class
+HashChain.hash(content)           // Generate SHA-256 hash
+HashChain.createEntry(content, prevHash)  // Create chained entry
+HashChain.validateChain(entries)  // Verify chain integrity
+```
 
-## Database Schema Notes
+Each journal entry includes:
+- `content_hash`: SHA-256 of entry content
+- `prev_hash`: Previous entry's hash
+- `sequence`: Monotonic counter
 
-The database uses PostgreSQL with pgvector extension for semantic search:
-- **profiles** extends Supabase auth with public keys and settings
-- **documents** stores Lexical editor state and links to journals
-- **journals** contains metadata, summaries, and vector embeddings
-- **journal_entries** is append-only with content hashes and embeddings
-- **checkpoints** stores Merkle roots with blockchain proof
-- **certificates** contains exportable verification documents
+## Component Structure
 
-Row Level Security (RLS) policies ensure users only see their own private data while allowing public/summary content to be shared.
+Components follow modular design:
 
-## Key Principles
+```
+components/
+├── auth/             # Authentication forms
+├── editor/           # Lexical editor components
+│   ├── LexicalEditor.tsx
+│   ├── AICommandPalette.tsx
+│   └── EditorPlugins.tsx
+├── journal/          # Journal viewing/management
+│   ├── JournalViewer.tsx
+│   ├── JournalTimeline.tsx
+│   └── ProcessInsights.tsx
+└── verification/     # Cryptographic proofs
+    ├── CertificateGenerator.tsx
+    └── HashChainValidator.tsx
+```
 
-### User Experience
-- **Transparency over detection**: Celebrate human thinking rather than catching AI use
-- **Process has value**: The journey of thought is as meaningful as the final product
-- **Privacy-preserving**: Can prove process without revealing proprietary prompts
-- **Natural workflow**: Invisible capture that doesn't disrupt creative flow
+## Error Handling
 
-### Technical Approach
-- **Immutable append-only logs** for trust and verification
-- **Semantic search** through journals using vector embeddings
-- **Real-time collaboration** on shared journals
-- **Cryptographic proofs** without revealing private content
-- **Multi-modal capture** including voice annotations
+- Use Zod for input validation in services
+- Services throw descriptive errors
+- Components use ErrorBoundary for graceful failures
+- Toast notifications for user feedback
 
-## Development Phases
+## Environment Configuration
 
-1. **MVP (1 week)**: Supabase setup, basic Lexical editor, journal capture, local hash chain
-2. **Alpha (2 weeks)**: pgvector semantic search, AI summaries, Twitter checkpointing, public views
-3. **Beta (3 weeks)**: Arweave integration, certificate generation, realtime collaboration, voice annotations
-4. **Launch (4 weeks)**: Performance optimization, publisher dashboard, API integrations, marketing site
+Required environment variables:
 
-## Important Implementation Notes
+```bash
+NEXT_PUBLIC_SUPABASE_URL=        # Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=   # Public anonymous key
+SUPABASE_SERVICE_ROLE_KEY=       # Server-side service key
 
-- Use **pgvector** for semantic search rather than external vector databases
-- Implement **hash chains** for local verification before blockchain checkpointing
-- Support **selective disclosure** - prove specific entries without revealing full journal
-- Generate **privacy-preserving summaries** that show process without revealing content
-- Build **certificate embedding** system for published work verification
-- Create **collaborative journal** features with attribution and co-signing
+# Optional AI providers
+OPENAI_API_KEY=                  # OpenAI GPT-5-mini
+ANTHROPIC_API_KEY=               # Claude 4 Sonnet
+```
 
-## Target Users
+## Key Implementation Patterns
 
-- **Primary**: Professional writers, journalists, researchers, content creators
-- **Secondary**: Publishers, employers, educational institutions  
-- **Tertiary**: Anyone needing to demonstrate authentic human involvement in creative work
+### 1. Server Components vs Client Components
+- Pages use Server Components for initial data fetching
+- Interactive components use "use client" directive
+- Services have dual implementations for both environments
 
-The platform aims to make human thinking visible and valuable in an AI-dominated creative landscape.
+### 2. Data Fetching
+- Server Components fetch directly via ServerService
+- Client Components use BrowserService with React hooks
+- Real-time updates via Supabase subscriptions
+
+### 3. Type Safety
+- Database types generated from Supabase schema
+- Zod schemas for runtime validation
+- Strict TypeScript configuration
+
+### 4. Privacy Levels
+- **private**: Full journal only visible to author
+- **summary**: AI-generated summary public
+- **public**: Full journal publicly visible
+
+## Current Implementation Status
+
+✅ **Completed**:
+- Project structure and configuration
+- Database schema with migrations
+- Service layer architecture
+- Authentication system
+- Document and Journal services
+- Hash chain verification
+- UI component structure
+- Testing infrastructure
+
+🚧 **In Progress**:
+- Lexical editor integration
+- AI command palette
+- Real-time collaboration
+
+📋 **Planned**:
+- Merkle tree checkpointing
+- Blockchain witnessing
+- Certificate generation
+- Voice annotations
+- IMPORTANT: Do not change any model names, versions, or configuration values unless explicitly requested!
+- You can use Playwright MCP for testing, but before using it it needs to be added with: claude mcp add playwright npx @playwright/mcp@latest
