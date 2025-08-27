@@ -6,7 +6,7 @@
  */
 
 import React from 'react'
-import { Button } from './Button'
+import { Button } from './button'
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -93,7 +93,7 @@ function DefaultErrorFallback({ error, reset }: ErrorFallbackProps) {
         </p>
         
         <div className="space-x-3">
-          <Button onClick={reset} variant="primary">
+          <Button onClick={reset} variant="default">
             Try again
           </Button>
           <Button 

@@ -131,7 +131,7 @@ const defaultRetryConfig: RetryConfig = {
   retryCondition: (error) => {
     // Retry on network errors and 5xx server errors
     return error instanceof NetworkError || 
-           (error instanceof AppError && error.statusCode && error.statusCode >= 500)
+           (error instanceof AppError && error.statusCode !== undefined && error.statusCode >= 500)
   }
 }
 

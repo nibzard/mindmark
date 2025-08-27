@@ -6,7 +6,7 @@
  */
 
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 interface RecentDocument {
   id: string
@@ -51,7 +51,7 @@ export function RecentDocuments({
 
   const getStatusColor = (document: RecentDocument): string => {
     const hasJournal = document.writing_journals && document.writing_journals.length > 0
-    const journalEntries = hasJournal ? document.writing_journals[0].entry_count : 0
+    const journalEntries = hasJournal ? document.writing_journals![0].entry_count : 0
     
     if (journalEntries > 10) return 'text-green-600 bg-green-50 border-green-200'
     if (journalEntries > 0) return 'text-blue-600 bg-blue-50 border-blue-200'
@@ -60,7 +60,7 @@ export function RecentDocuments({
 
   const getStatusText = (document: RecentDocument): string => {
     const hasJournal = document.writing_journals && document.writing_journals.length > 0
-    const journalEntries = hasJournal ? document.writing_journals[0].entry_count : 0
+    const journalEntries = hasJournal ? document.writing_journals![0].entry_count : 0
     
     if (journalEntries > 10) return 'Active'
     if (journalEntries > 0) return 'In Progress'
@@ -88,9 +88,9 @@ export function RecentDocuments({
         {documents.length > 0 ? (
           documents.map((document) => {
             const hasJournal = document.writing_journals && document.writing_journals.length > 0
-            const journalEntries = hasJournal ? document.writing_journals[0].entry_count : 0
-            const lastActivity = hasJournal && document.writing_journals[0].updated_at 
-              ? document.writing_journals[0].updated_at 
+            const journalEntries = hasJournal ? document.writing_journals![0].entry_count : 0
+            const lastActivity = hasJournal && document.writing_journals![0].updated_at 
+              ? document.writing_journals![0].updated_at 
               : document.updated_at
 
             return (

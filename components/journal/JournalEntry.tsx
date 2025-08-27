@@ -62,10 +62,12 @@ export function JournalEntry({
 }: JournalEntryProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showHashDetails, setShowHashDetails] = useState(false)
+  const [showMetadataDetails, setShowMetadataDetails] = useState(false)
 
   const config = entryTypeConfig[entry.entry_type] || entryTypeConfig.annotation
   const timestamp = new Date(entry.created_at)
-  const isLongContent = entry.content.length > 300
+  const content = entry.content || ''
+  const isLongContent = content.length > 300
 
   // Format content for display
   const formatContent = (content: string) => {
@@ -78,8 +80,8 @@ export function JournalEntry({
   }
 
   const displayContent = isLongContent && !isExpanded 
-    ? entry.content.slice(0, 300) + '...'
-    : entry.content
+    ? content.slice(0, 300) + '...'
+    : content
 
   return (
     <div className={`border border-gray-200 rounded-lg overflow-hidden ${className}`}>
@@ -173,13 +175,13 @@ export function JournalEntry({
       {showMetadata && entry.metadata && Object.keys(entry.metadata).length > 0 && (
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
           <button
-            onClick={() => setShowMetadata(!showMetadata)}
+            onClick={() => setShowMetadataDetails(!showMetadataDetails)}
             className="text-sm text-gray-600 hover:text-gray-800 font-medium"
           >
             Metadata ({Object.keys(entry.metadata).length} items)
           </button>
           
-          {showMetadata && (
+          {showMetadataDetails && (
             <div className="mt-2 text-xs text-gray-600 space-y-1">
               {Object.entries(entry.metadata).map(([key, value]) => (
                 <div key={key} className="flex">

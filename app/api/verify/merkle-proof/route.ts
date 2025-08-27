@@ -68,4 +68,114 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         )
       }
-    }\n\n    // Verify the entry exists in the journal\n    const { data: entry, error: entryError } = await supabase\n      .from('journal_entries')\n      .select('id, content_hash, sequence')\n      .eq('journal_id', journalId)\n      .eq('content_hash', entryHash)\n      .single()\n\n    if (entryError || !entry) {\n      return NextResponse.json(\n        { error: 'Journal entry not found' },\n        { status: 404 }\n      )\n    }\n\n    // Generate Merkle proof\n    const verificationService = new ServerVerificationService()\n    const proof = await verificationService.getMerkleProof(journalId, entryHash)\n\n    return NextResponse.json({\n      journalId,\n      entryId: entry.id,\n      entryHash,\n      sequence: entry.sequence,\n      merkleProof: {\n        leaf: proof.leaf,\n        proof: proof.proof,\n        root: proof.root,\n        verified: proof.verified\n      },\n      generatedAt: new Date().toISOString()\n    })\n\n  } catch (error) {\n    console.error('Merkle proof error:', error)\n    return NextResponse.json(\n      { \n        error: error instanceof Error \n          ? error.message \n          : 'Failed to generate Merkle proof' \n      },\n      { status: 500 }\n    )\n  }\n}\n\nexport async function GET(request: NextRequest) {\n  try {\n    const { searchParams } = new URL(request.url)\n    const journalId = searchParams.get('journalId')\n    const entryHash = searchParams.get('entryHash')\n\n    if (!journalId || !entryHash) {\n      return NextResponse.json(\n        { error: 'journalId and entryHash query parameters are required' },\n        { status: 400 }\n      )\n    }\n\n    const supabase = await createSupabaseServerClient()\n\n    // Verify the entry exists (public verification, no auth required)\n    const { data: entry, error: entryError } = await supabase\n      .from('journal_entries')\n      .select('id, content_hash, sequence, created_at')\n      .eq('journal_id', journalId)\n      .eq('content_hash', entryHash)\n      .single()\n\n    if (entryError || !entry) {\n      return NextResponse.json(\n        { error: 'Journal entry not found' },\n        { status: 404 }\n      )\n    }\n\n    // Generate proof for verification\n    const verificationService = new ServerVerificationService()\n    const proof = await verificationService.getMerkleProof(journalId, entryHash)\n\n    return NextResponse.json({\n      journalId,\n      entryId: entry.id,\n      entryHash,\n      sequence: entry.sequence,\n      createdAt: entry.created_at,\n      merkleProof: {\n        leaf: proof.leaf,\n        proofElements: proof.proof.length,\n        root: proof.root,\n        verified: proof.verified,\n        // Don't include the actual proof data in GET requests for security\n        // Full proof available via POST request with authentication\n      },\n      verifiedAt: new Date().toISOString()\n    })\n\n  } catch (error) {\n    console.error('Merkle proof verification error:', error)\n    return NextResponse.json(\n      { \n        error: error instanceof Error \n          ? error.message \n          : 'Failed to verify Merkle proof' \n      },\n      { status: 500 }\n    )\n  }\n}"
+    }
+
+    // Verify the entry exists in the journal
+    const { data: entry, error: entryError } = await supabase
+      .from('journal_entries')
+      .select('id, content_hash, sequence')
+      .eq('journal_id', journalId)
+      .eq('content_hash', entryHash)
+      .single()
+
+    if (entryError || !entry) {
+      return NextResponse.json(
+        { error: 'Journal entry not found' },
+        { status: 404 }
+      )
+    }
+
+    // Generate Merkle proof
+    const verificationService = new ServerVerificationService()
+    const proof = await verificationService.getMerkleProof(journalId, entryHash)
+
+    return NextResponse.json({
+      journalId,
+      entryId: entry.id,
+      entryHash,
+      sequence: entry.sequence,
+      merkleProof: {
+        leaf: proof.leaf,
+        proof: proof.proof,
+        root: proof.root,
+        verified: proof.verified
+      },
+      generatedAt: new Date().toISOString()
+    })
+
+  } catch (error) {
+    console.error('Merkle proof error:', error)
+    return NextResponse.json(
+      { 
+        error: error instanceof Error 
+          ? error.message 
+          : 'Failed to generate Merkle proof' 
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const journalId = searchParams.get('journalId')
+    const entryHash = searchParams.get('entryHash')
+
+    if (!journalId || !entryHash) {
+      return NextResponse.json(
+        { error: 'journalId and entryHash query parameters are required' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = await createSupabaseServerClient()
+
+    // Verify the entry exists (public verification, no auth required)
+    const { data: entry, error: entryError } = await supabase
+      .from('journal_entries')
+      .select('id, content_hash, sequence, created_at')
+      .eq('journal_id', journalId)
+      .eq('content_hash', entryHash)
+      .single()
+
+    if (entryError || !entry) {
+      return NextResponse.json(
+        { error: 'Journal entry not found' },
+        { status: 404 }
+      )
+    }
+
+    // Generate proof for verification
+    const verificationService = new ServerVerificationService()
+    const proof = await verificationService.getMerkleProof(journalId, entryHash)
+
+    return NextResponse.json({
+      journalId,
+      entryId: entry.id,
+      entryHash,
+      sequence: entry.sequence,
+      createdAt: entry.created_at,
+      merkleProof: {
+        leaf: proof.leaf,
+        proofElements: proof.proof.length,
+        root: proof.root,
+        verified: proof.verified,
+        // Don't include the actual proof data in GET requests for security
+        // Full proof available via POST request with authentication
+      },
+      verifiedAt: new Date().toISOString()
+    })
+
+  } catch (error) {
+    console.error('Merkle proof verification error:', error)
+    return NextResponse.json(
+      { 
+        error: error instanceof Error 
+          ? error.message 
+          : 'Failed to verify Merkle proof' 
+      },
+      { status: 500 }
+    )
+  }
+}

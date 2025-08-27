@@ -4,13 +4,14 @@
  */
 
 import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 /**
  * Combine class names with conditional logic
- * Uses clsx for better conditional class handling
+ * Uses clsx for better conditional class handling and tailwind-merge for deduplication
  */
 export function cn(...inputs: ClassValue[]) {
-  return clsx(inputs)
+  return twMerge(clsx(inputs))
 }
 
 /**
@@ -239,3 +240,8 @@ export function formatValidationErrors(errors: Record<string, string[]>): string
 export function generateId(prefix: string = 'id'): string {
   return `${prefix}-${Math.random().toString(36).substr(2, 9)}`
 }
+
+/**
+ * Alias for formatRelativeTime for backward compatibility
+ */
+export const formatTimeAgo = formatRelativeTime

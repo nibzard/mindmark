@@ -179,8 +179,8 @@ export async function POST(request: NextRequest) {
       // Initialize journal service and create initial entry
       const journalService = createJournalService()
       try {
-        await journalService.captureEntry(journal.id, {
-          type: 'annotation',
+        await journalService.addEntry(journal.id, {
+          entryType: 'annotation',
           content: `Document created: "${validatedData.title}"`,
           metadata: {
             action: 'document_created',

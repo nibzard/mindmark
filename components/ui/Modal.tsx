@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useRef } from 'react'
-import { Button } from './Button'
+import { Button } from './button'
 
 export interface ModalProps {
   isOpen: boolean
@@ -174,7 +174,7 @@ export function ConfirmModal({
               {cancelText}
             </Button>
             <Button
-              variant={type === 'danger' ? 'danger' : 'primary'}
+              variant={type === 'danger' ? 'destructive' : 'default'}
               onClick={onConfirm}
               loading={loading}
             >

@@ -6,9 +6,9 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Modal } from '@/components/ui/modal-compat'
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import type { PublicationCertificate, CertificateData } from '@/lib/types/database'
 
 interface CertificateViewerProps {
@@ -37,7 +37,6 @@ export function CertificateViewer({ certificateId, onClose }: CertificateViewerP
           merkle_root: '0x' + 'a'.repeat(64),
           public_url: `https://mindmark.io/certificates/${certificateId}`,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
           certificate_data: {
             '@context': [
               'https://www.w3.org/2018/credentials/v1',
@@ -130,7 +129,7 @@ export function CertificateViewer({ certificateId, onClose }: CertificateViewerP
   }
 
   return (
-    <Modal isOpen={true} onClose={onClose} size="lg">
+    <Modal isOpen={true} onClose={onClose} size="lg" title="Certificate Details">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -153,7 +152,7 @@ export function CertificateViewer({ certificateId, onClose }: CertificateViewerP
         {/* Loading State */}
         {loading && (
           <div className="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
+            <Spinner size="lg" />
           </div>
         )}
 
@@ -388,7 +387,7 @@ export function CertificateViewer({ certificateId, onClose }: CertificateViewerP
                 Close
               </Button>
               {certificate.public_url && (
-                <Button variant="primary" onClick={handleCopyUrl}>
+                <Button variant="default" onClick={handleCopyUrl}>
                   Copy Share URL
                 </Button>
               )}

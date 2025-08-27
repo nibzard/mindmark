@@ -17,7 +17,7 @@ const UpdateDocumentSchema = z.object({
 })
 
 interface RouteParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 /**
@@ -25,6 +25,7 @@ interface RouteParams {
  * Get a specific document with journal information
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const documentId = params.id
+    const documentId = resolvedParams.id
 
     // Fetch document with journal and recent entries
     const { data: document, error } = await supabase
@@ -89,6 +90,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * Update a document and create journal entry
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -98,7 +100,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const documentId = params.id
+    const documentId = resolvedParams.id
 
     // Parse and validate request
     const body = await request.json()
@@ -169,8 +171,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         }
 
         if (changes.length > 0) {
-          await journalService.captureEntry(existingDoc.writing_journal_id, {
-            type: 'revision',
+          await journalService.addEntry(existingDoc.writing_journal_id, {
+            entryType: 'revision',
             content: changes.join('; '),
             metadata: {
               action: 'document_updated',
@@ -207,6 +209,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
  * Delete a document and its associated journal
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -216,7 +219,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const documentId = params.id
+    const documentId = resolvedParams.id
 
     // Check document ownership and get journal ID
     const { data: document, error: fetchError } = await supabase

@@ -11,7 +11,7 @@ import { JournalTimeline } from './JournalTimeline'
 import { JournalFilters } from './JournalFilters'
 import { ProcessInsights } from './ProcessInsights'
 import { JournalStats } from './JournalStats'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Spinner } from '@/components/ui/spinner'
 import type { WritingJournal, JournalEntry as JournalEntryType, JournalEntryType as EntryType } from '@/lib/types/database'
 import { createJournalService } from '@/lib/services/journal'
 
@@ -219,7 +219,7 @@ export function JournalViewer({
       <div className="px-6 py-6">
         {loading ? (
           <div className="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
+            <Spinner size="lg" />
           </div>
         ) : (
           <>

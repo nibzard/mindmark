@@ -14,8 +14,9 @@ interface CheckpointRequest {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -32,7 +33,7 @@ export async function POST(
     const { data: journal, error: journalError } = await supabase
       .from('writing_journals')
       .select('id, writer_id, entry_count')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (journalError || !journal) {
@@ -74,13 +75,13 @@ export async function POST(
     // Create checkpoint
     const verificationService = new ServerVerificationService()
     const checkpoint = await verificationService.createCheckpoint(
-      params.id,
+      resolvedParams.id,
       requestData.witnessType || 'local'
     )
 
     return NextResponse.json({
       checkpointId: checkpoint.id,
-      journalId: params.id,
+      journalId: resolvedParams.id,
       merkleRoot: checkpoint.merkle_root,
       entryRange: checkpoint.entry_range,
       witnessType: checkpoint.witness_type,
@@ -103,8 +104,9 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -121,7 +123,7 @@ export async function GET(
     const { data: journal, error: journalError } = await supabase
       .from('writing_journals')
       .select('id, writer_id')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (journalError || !journal) {
@@ -142,7 +144,7 @@ export async function GET(
     const { data: checkpoints, error: checkpointsError } = await supabase
       .from('verification_checkpoints')
       .select('*')
-      .eq('journal_id', params.id)
+      .eq('journal_id', resolvedParams.id)
       .order('created_at', { ascending: false })
 
     if (checkpointsError) {
@@ -150,7 +152,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      journalId: params.id,
+      journalId: resolvedParams.id,
       checkpoints: checkpoints || [],
       totalCheckpoints: checkpoints?.length || 0
     })

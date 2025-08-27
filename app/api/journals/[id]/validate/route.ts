@@ -9,8 +9,9 @@ import { ServerJournalService } from '@/lib/services/journal'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -27,7 +28,7 @@ export async function GET(
     const { data: journal, error: journalError } = await supabase
       .from('writing_journals')
       .select('id, writer_id, entry_count')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (journalError || !journal) {
@@ -47,12 +48,12 @@ export async function GET(
     // Validate hash chain
     const journalService = new ServerJournalService()
     const [isValid, summary] = await Promise.all([
-      journalService.validateHashChain(params.id),
-      journalService.getHashChainSummary(params.id)
+      journalService.validateHashChain(resolvedParams.id),
+      journalService.getHashChainSummary(resolvedParams.id)
     ])
 
     return NextResponse.json({
-      journalId: params.id,
+      journalId: resolvedParams.id,
       isValid,
       totalEntries: summary.totalEntries,
       checkpointCount: summary.checkpointCount,
@@ -72,8 +73,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -90,7 +92,7 @@ export async function POST(
     const { data: journal, error: journalError } = await supabase
       .from('writing_journals')
       .select('id, writer_id')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (journalError || !journal) {
@@ -109,13 +111,13 @@ export async function POST(
 
     // Re-validate and update validation timestamp
     const journalService = new ServerJournalService()
-    const isValid = await journalService.validateHashChain(params.id)
+    const isValid = await journalService.validateHashChain(resolvedParams.id)
 
     // Could store validation result in database for audit trail
     // For now, just return the result
 
     return NextResponse.json({
-      journalId: params.id,
+      journalId: resolvedParams.id,
       isValid,
       message: isValid 
         ? 'Hash chain validation passed' 

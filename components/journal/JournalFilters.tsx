@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import type { JournalEntryType } from '@/lib/types/database'
 
 interface FilterState {

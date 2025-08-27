@@ -234,7 +234,7 @@ export class ProductionWitnessService implements WitnessService {
           url: `https://viewblock.io/arweave/tx/${witnessId}`,
           confirmations: status.confirmed ? status.confirmed.number_of_confirmations : 0,
           submittedAt: new Date().toISOString(), // Would need to get from transaction
-          confirmedAt: status.confirmed ? new Date(status.confirmed.block_timestamp * 1000).toISOString() : undefined
+          confirmedAt: status.confirmed ? new Date((status.confirmed as any).block_timestamp * 1000).toISOString() : undefined
         }
       } catch (error) {
         return {

@@ -200,7 +200,7 @@ export function useAI(config: UseAIConfig = {}): UseAIReturn {
       onError?.(aiError)
       return null
     }
-  }, [state.messages, state.isGenerating, defaultModel, journalId, autoCapture, captureInteraction, onResponse, onError])
+  }, [state.messages, state.isGenerating, defaultModel, journalId, autoCapture, onResponse, onError])
 
   /**
    * Stream text generation

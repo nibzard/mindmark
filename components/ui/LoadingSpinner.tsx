@@ -151,7 +151,10 @@ export function LoadingOverlay({
       {children}
       {isLoading && (
         <div className="absolute inset-0 bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex items-center justify-center z-50">
-          <LoadingSpinner size="lg" text={text} />
+          <div className="flex flex-col items-center space-y-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-current border-t-transparent" />
+            {text && <span className="text-sm text-gray-600">{text}</span>}
+          </div>
         </div>
       )}
     </div>

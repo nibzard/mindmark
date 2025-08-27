@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       try {
         const userMessage = validatedRequest.messages.find(m => m.role === 'user')
         if (userMessage) {
-          const promptEntry = await journalService.captureEntry(validatedRequest.journalId, {
-            type: 'prompt',
+          const promptEntry = await journalService.addEntry(validatedRequest.journalId, {
+            entryType: 'prompt',
             content: userMessage.content,
             metadata: {
               provider: validatedRequest.modelConfig.provider,
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       try {
         const responseData = await aiResponse.json()
         
-        const responseEntry = await journalService.captureEntry(validatedRequest.journalId, {
+        const responseEntry = await journalService.addEntry(validatedRequest.journalId, {
           type: 'response',
           content: responseData.content,
           metadata: {

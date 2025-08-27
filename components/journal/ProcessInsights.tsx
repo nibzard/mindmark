@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import type { WritingJournal, JournalEntry, JournalEntryType } from '@/lib/types/database'
 
 interface ProcessInsightsProps {

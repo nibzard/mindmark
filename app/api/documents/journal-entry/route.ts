@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
     // Create journal entry
     const journalService = createJournalService()
     
-    const entry = await journalService.captureEntry(validatedData.journalId, {
-      type: validatedData.entry_type,
+    const entry = await journalService.addEntry(validatedData.journalId, {
+      entryType: validatedData.entry_type,
       content: validatedData.content,
       metadata: {
         ...validatedData.metadata,

@@ -18,7 +18,7 @@ const JournalQuerySchema = z.object({
 })
 
 interface RouteParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 /**
@@ -26,6 +26,7 @@ interface RouteParams {
  * Get journal entries for a specific document
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const documentId = params.id
+    const documentId = resolvedParams.id
 
     // Parse query parameters
     const { searchParams } = new URL(request.url)
@@ -150,6 +151,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * Add a manual journal entry (for annotations, decisions, etc.)
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -159,7 +161,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const documentId = params.id
+    const documentId = resolvedParams.id
 
     // Validation schema for manual entries
     const ManualEntrySchema = z.object({
@@ -195,8 +197,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const journalService = createJournalService()
     
     try {
-      const entry = await journalService.captureEntry(document.writing_journal_id, {
-        type: validatedEntry.entry_type,
+      const entry = await journalService.addEntry(document.writing_journal_id, {
+        entryType: validatedEntry.entry_type,
         content: validatedEntry.content,
         metadata: {
           ...validatedEntry.metadata,
@@ -232,6 +234,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  * Update journal settings (privacy level, summary, etc.)
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const resolvedParams = await params
   try {
     const supabase = await createSupabaseServerClient()
     
@@ -241,7 +244,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const documentId = params.id
+    const documentId = resolvedParams.id
 
     const JournalUpdateSchema = z.object({
       privacy_level: z.enum(['private', 'summary', 'public']).optional(),

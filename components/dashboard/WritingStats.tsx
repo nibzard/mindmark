@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Spinner } from '@/components/ui/spinner'
 
 interface WritingStatsProps {
   documentCount: number
@@ -112,7 +112,7 @@ export function WritingStats({
       <div className="p-6">
         {loading ? (
           <div className="flex justify-center py-8">
-            <LoadingSpinner size="md" />
+            <Spinner size="md" />
           </div>
         ) : (
           <>

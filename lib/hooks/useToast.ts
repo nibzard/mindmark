@@ -6,7 +6,9 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
+import React, { createContext, useContext } from 'react'
 import { type Toast, type ToastType } from '@/components/ui/Toast'
+import { ToastContainer } from '@/components/ui/Toast'
 
 export interface UseToastReturn {
   toasts: Toast[]
@@ -115,9 +117,6 @@ export function useToast(): UseToastReturn {
 /**
  * Global Toast Provider Context
  */
-import React, { createContext, useContext } from 'react'
-import { ToastContainer } from '@/components/ui/Toast'
-
 const ToastContext = createContext<UseToastReturn | null>(null)
 
 export interface ToastProviderProps {
@@ -128,15 +127,15 @@ export interface ToastProviderProps {
 export function ToastProvider({ children, position = 'top-right' }: ToastProviderProps) {
   const toastUtils = useToast()
 
-  return (
-    <ToastContext.Provider value={toastUtils}>
-      {children}
-      <ToastContainer
-        toasts={toastUtils.toasts}
-        onRemoveToast={toastUtils.removeToast}
-        position={position}
-      />
-    </ToastContext.Provider>
+  return React.createElement(
+    ToastContext.Provider,
+    { value: toastUtils },
+    children,
+    React.createElement(ToastContainer, {
+      toasts: toastUtils.toasts,
+      onRemoveToast: toastUtils.removeToast,
+      position: position
+    })
   )
 }
 
@@ -159,6 +158,6 @@ export function withToast<P extends object>(
 ) {
   return function WithToastComponent(props: P) {
     const toast = useToast()
-    return <Component {...props} toast={toast} />
+    return React.createElement(Component, { ...props, toast })
   }
 }

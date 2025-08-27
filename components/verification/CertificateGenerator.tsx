@@ -6,9 +6,9 @@
  */
 
 import { useState } from 'react'
-import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Modal } from '@/components/ui/modal-compat'
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { createVerificationService } from '@/lib/services/verification'
 import type { CertificateRequest } from '@/lib/services/verification'
 
@@ -136,7 +136,7 @@ export function CertificateGenerator({
   ]
 
   return (
-    <Modal isOpen={true} onClose={onClose} size="lg">
+    <Modal isOpen={true} onClose={onClose} size="lg" title="Generate Certificate">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -300,12 +300,12 @@ export function CertificateGenerator({
             </Button>
             <Button 
               type="submit" 
-              variant="primary" 
+              variant="default" 
               disabled={loading || !formData.documentId || !formData.authorName}
             >
               {loading ? (
                 <>
-                  <LoadingSpinner size="sm" className="mr-2" />
+                  <Spinner size="sm" className="mr-2" />
                   Generating...
                 </>
               ) : (

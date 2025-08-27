@@ -7,7 +7,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { CertificateViewer } from './CertificateViewer'
 import { CertificateGenerator } from '@/components/verification/CertificateGenerator'
 import type { PublicationCertificate } from '@/lib/types/database'
@@ -246,7 +246,7 @@ export function CertificateList({
           </p>
           {eligibleDocuments.length > 0 && (
             <Button
-              variant="primary"
+              variant="default"
               size="sm"
               onClick={() => setShowGenerator(true)}
             >
@@ -271,7 +271,7 @@ export function CertificateList({
                   </h5>
                   <Button
                     variant="secondary"
-                    size="xs"
+                    size="sm"
                     onClick={() => handleGenerateCertificate(document)}
                   >
                     Generate

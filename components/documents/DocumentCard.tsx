@@ -7,10 +7,10 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ConfirmModal } from '@/components/ui/Modal'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { useToast } from '@/lib/hooks/useToast'
-import { formatRelativeTime } from '@/lib/utils/ui'
+import { ConfirmModal } from '@/components/ui/modal-compat'
+import { formatTimeAgo } from '@/lib/utils/ui'
+import { Spinner } from '@/components/ui/spinner'
+import { useToast } from '@/lib/hooks/useToast-sonner'
 
 interface Document {
   id: string
@@ -160,7 +160,7 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
               {getContentPreview()}
             </p>
             <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-              <span>Updated {formatRelativeTime(document.updated_at)}</span>
+              <span>Updated {formatTimeAgo(document.updated_at)}</span>
               {journal && (
                 <span>{journal.entry_count} journal entries</span>
               )}
@@ -197,7 +197,7 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
                       disabled={publishing}
                       className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                     >
-                      {publishing && <LoadingSpinner size="sm" className="mr-2" />}
+                      {publishing && <Spinner size="sm" className="mr-2" />}
                       {document.published ? 'Unpublish' : 'Publish'}
                     </button>
                     <button
@@ -205,7 +205,7 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
                       disabled={deleting}
                       className="flex items-center w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
                     >
-                      {deleting && <LoadingSpinner size="sm" className="mr-2" />}
+                      {deleting && <Spinner size="sm" className="mr-2" />}
                       Delete
                     </button>
                   </div>
@@ -264,9 +264,9 @@ export function DocumentCard({ document, viewMode, onUpdate }: DocumentCardProps
                     {deleting ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
         
         <p className="mt-3 text-sm text-gray-600 line-clamp-3">
